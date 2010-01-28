@@ -1,0 +1,39 @@
+/* tv */
+pre.root { 
+	font-family: "Courier New","Lucida Console",monospace;
+	color: #FFF;
+	background-color: #000;
+	font-size: 11.4px;
+	letter-spacing: 1px;
+	line-height: 12.8px;
+}
+.root a { color: #FFF; }
+.BK, .BK a, .BK a:visited, .BK a:visited:hover { color: #000;}
+.bgBK { background-color: #000;}
+.C, .C a, .C a:visited, .C a:visited:hover {color: #0FF;}
+.bgC { background-color: #0FF;}
+.G, .G a, .G a:visited, .G a:visited:hover {color: #0F0;}
+.bgG { background-color: #0F0;}
+.M, .M a, .M a:visited, .M a:visited:hover {color: #F0F;}
+.bgM { background-color: #F0F;}
+.R, .R a, .R a:visited, .R a:visited:hover { color: #F00;}
+.bgR { background-color: #F00;}
+.W, .W a, .W a:visited, .W a:visited:hover { color: #FFF;}
+.bgW { background-color: #FFF;}
+.Y, .Y a, .Y a:visited, .Y a:visited:hover { color: #FF0;}
+.bgY { background-color: #FF0;}
+.B, .B a, .B a:visited, .B a:visited:hover { color: #00F;}
+.bgB { background-color: #00F;}
+.DH { font-size: 15px; letter-spacing: -1.6px; line-height: 15.2px; }
+.sizeSetting { display:none; }
+.subarea 	{ display: none }
+/* .subPageOff { font-weight: bold; }
+.subPageOn	{} */
+.updateOff	{ font-weight: bold; }
+.updateOn	{}
+.webView	{}
+.tvView		{ font-weight: bold; }
+.aNormal 	{ font-weight: bold; }
+.aLarger 	{}
+.aLargest 	{}
+.upArrow	{}

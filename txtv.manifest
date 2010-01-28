@@ -1,0 +1,19 @@
+CACHE MANIFEST
+# txtv manifest, version 0.2.5
+
+# HTML
+index.html
+
+# CSS
+css/svt.css
+css/txtv.css
+
+# JS
+js/jquery-1.4.min.js
+js/txtv.js
+
+# PICS
+pics/ajax-loader.gif
+
+NETWORK:
+http://79.99.1.153/txtv/api/
