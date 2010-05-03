@@ -1,7 +1,29 @@
-html, body, #txtv, #pages > div, .page, #install {
-	width: 320px;
+html, body, #txtv, #pages > div, .page {
+	width: 100%;
 	height: 416px;
 	background: #000;
+}
+
+.landscape html, .landscape body, .landscape #txtv, .landscape #pages > div, .landscape .page {
+    width: 480px;
+    height: 416px;
+}
+
+
+.landscape pre.root { 
+    font-size: 14.4px;
+    word-spacing: 120%;
+    line-height: 13px;
+}
+
+.landscape #pages {
+    left: 40px;
+    position: absolute;
+}
+
+
+.portrait pre.root {
+    font-size: 11.4px;
 }
 
 html, body, #txtv {
@@ -30,6 +52,22 @@ a, input {
 	position: absolute;
 }
 
+.page:nth-child(2){ left: 100%; }
+.page:nth-child(3){ left: 200%; }
+.page:nth-child(4){ left: 300%; }
+.page:nth-child(5){ left: 400%; }
+.page:nth-child(6){ left: 500%; }
+.page:nth-child(7){ left: 600%; }
+.page:nth-child(8){ left: 700%; }
+.page:nth-child(9){ left: 800%; }
+.page:nth-child(10){ left: 900%; }
+.page:nth-child(11){ left: 1000%; }
+.page:nth-child(12){ left: 1100%; }
+.page:nth-child(13){ left: 1200%; }
+.page:nth-child(14){ left: 1300%; }
+.page:nth-child(15){ left: 1400%; }
+.page:nth-child(16){ left: 1500%; }
+
 .anim {
 	-webkit-transition-property: -webkit-transform;
 	-webkit-transition-duration: 0.5s;
@@ -44,6 +82,10 @@ a, input {
 	left: 0px;
 	opacity: 0.6;
 	z-index:1337;
+}
+
+.landscape .loader {
+    height: 300px;
 }
 
 .loader span {
@@ -70,23 +112,49 @@ a, input {
 	line-height: 0;
 	font-size: 0;
 	color: #fff;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 
-#install {
-	display: none;
+#refreshBar {
+    width: 100%;
+    height: 40px;
+    position: absolute;
 }
 
-#install.show {
-	display: table-cell;
-    vertical-align: middle
+
+#top, #right, #bottom, #left {
+    top: 0;
+    position: absolute;
+    opacity: 0;
+    background: #f00;
 }
 
-#installMessage {
-	color: yellow;
-	font-family: "Courier New", "Lucida Console", monospace;
-	margin: 2em;
+#top, #bottom {
+    margin: 0 auto;
+    width: 160px;
+    height: 40px;
 }
 
-#installMessage strong {
-	color: blue;
+#left, #right {
+    width: 40px;
+    height: 160px;
+    bottom: 0px;
+    top: auto;
+}
+
+.portrait #top, .portrait #bottom {
+    left: 80px;
+}
+
+.landscape #top, .landscape #bottom {
+    left: 160px;
+}
+
+#right {
+    right: 0;
+}
+
+#bottom {
+    top: auto;
+    bottom: 0;
 }

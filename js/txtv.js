@@ -5,8 +5,20 @@ touchend = 'ontouchend' in document.documentElement ? 'touchend' : 'mouseup';
 
 iphone = navigator.userAgent.match(/iPhone/i);
 
+if ('Ti' in window) {
+    var widths = {
+        portrait: 320,
+        landscape: 480
+    }
+    Ti.App.addEventListener('orientationchange', function(e){
+        txtv.width = widths[e.orientation];
+        document.body.className = e.orientation;
+    });
+}
+
 // The singleton
 var txtv = {
+    pageChangeSensitivity : 50,
     height: 416, // Lazily hardcoded
     width: 320,
     dom: {
@@ -17,29 +29,7 @@ var txtv = {
     },
     init: function(){
         document.preventScroll = true; // Let me handle my own scrolling, please
-        
-        // Quick fix to remap the iPhone's touch events
-        if(iphone){
-            txtv.touch.normalize = function(func){
-                return function(e){
-                    
-                    if (!e.normalized) {
-                        var _e = e.originalEvent.changedTouches[0];
-                        e.pageX = _e.pageX;
-                        e.pageY = _e.pageY;
-                        e._normalized = true;
-                    }
-                    return func(e);
-                }
-            }
-        } else {
-            txtv.touch.normalize = function(func){
-                return function(e){
-                    return func(e);
-                }
-            }
-        }
-        
+
         // 100 is the start page
         txtv.page.create(100);
 
@@ -50,8 +40,52 @@ var txtv = {
         }, false);
         
         // Bind numpad events
-        txtv.dom.numpad.keyup(txtv.pagenum.change);
-        txtv.dom.numpad.blur(txtv.pagenum.blur);
+        if ('Ti' in window) {
+            Ti.App.addEventListener('numFieldChange', txtv.pagenum.change);
+            Ti.App.addEventListener('numFieldBlur', txtv.pagenum.blur);
+            Ti.App.addEventListener('shake', txtv.page.refresh);
+        }
+        
+        document.addEventListener(touchstart, txtv.touch.start, false);
+        document.addEventListener(touchmove, txtv.touch.move, false);
+        document.addEventListener(touchend, txtv.touch.end, false);
+        document.addEventListener('webkitTransitionEnd', txtv.touch.animEnd, false);
+        
+        var dirs = [{
+            name: 'top',
+            diffY: 1,
+            diffX: 0,
+            dir: 'v'
+        },
+        {
+            name: 'right',
+            diffY: 0,
+            diffX: -1,
+            dir: 'h'
+        },
+        {
+            name: 'bottom',
+            diffY: -1,
+            diffX: 0,
+            dir: 'v'
+        },
+        {
+            name: 'left',
+            diffY: 0,
+            diffX: 1,
+            dir: 'h'
+        }]
+        dirs.forEach(function(dir){
+            document.getElementById(dir.name).addEventListener(touchstart, function(opts){
+                console.log('hi')
+                var vars = txtv.touch.vars;
+                vars.touching = true;
+                vars.dir = dir.dir;
+                vars.at.y = 0;
+                vars.at.x = 0;
+                txtv.touch.end({ pageY: dir.diffY * txtv.pageChangeSensitivity, pageX: dir.diffX * txtv.pageChangeSensitivity,  });
+            }, false);
+        });
     },
     pagenum: {
         update: function(num){
@@ -75,26 +109,18 @@ var txtv = {
             headline.textContent = s;
         },
         change: function(e){
-            var input = $(e.currentTarget);
-            var num = input.val();
+            var num = e.value;
             txtv.pagenum.update(num);
-            
-            if(num.length == 3){
-                input.blur();
-            }
         },
-        blur: function(e){
-            var input = $(e.currentTarget).show();
-            var num = input.val();
-            
+        blur: function(e){          
             // Reset the page number of the page we're on
-            txtv.pagenum.update.call(txtv.touch.vars.elem.data('num'));
-            
+            var num = e.value;             
             // All page numbers consists of three digits, so move to page if we've got exactly three digits
             if(num.length == 3){
                 txtv.page.create(num);
+            } else {
+                txtv.pagenum.update(txtv.touch.vars.elem.data('num'));
             }
-            input.val('');
         }
     },
 
@@ -103,34 +129,37 @@ var txtv = {
         vars: {
             h: 0
         },
-        start: function(e){    
+        start: function(e){
+            //e.preventDefault();
+            var t = e.changedTouches ? e.changedTouches[0] : e;    
             var vars = txtv.touch.vars;
-            vars.at = {x: e.pageX, y: e.pageY }; // Touchdown!
+            vars.at = {x: t.pageX, y: t.pageY }; // Touchdown!
             vars.touching = true;
         },
         move: function(e){
             if (txtv.touch.vars.touching) {
+                var t = e.changedTouches ? e.changedTouches[0] : e;  
                 var vars = txtv.touch.vars;
                 var at = vars.at;
                 var dir = vars.dir;
                 
                 if (!dir) {
-                    if (Math.abs(e.pageY - at.y) > 10) { // Are we scrolling vertically?
+                    if (Math.abs(t.pageY - at.y) > 10) { // Are we scrolling vertically?
                         vars.dir = 'v';
                     } else {
-                        if (Math.abs(e.pageX - at.x) > 10) { // Or are we scrolling horizontally?
+                        if (Math.abs(t.pageX - at.x) > 10) { // Or are we scrolling horizontally?
                             vars.dir = 'h';
                         }
                     }
                 } else {
                     if(dir == 'v'){ // Perform vertical scroll
-                        var diffY = e.pageY - at.y;
+                        var diffY = t.pageY - at.y;
                         vars.prev.css('webkitTransform', 'translate3d(0px, ' + (diffY - txtv.height) + 'px, 0px)');
-                        vars.elem.css('webkitTransform', 'translate3d(0px, ' + (diffY) + 'px, 0px)');
+                        vars.elem.css('webkitTransform', 'translate3d(' + (vars.elem.data('h') || 0) + 'px, ' + (diffY) + 'px, 0px)');
                         vars.next.css('webkitTransform', 'translate3d(0px, ' + (diffY + txtv.height) + 'px, 0px)');
                     } else {
                         if(dir == 'h'){ // Perform horizontal subpage scroll
-                            vars.elem.css('webkitTransform', 'translate3d(' + (-vars.h * txtv.width + e.pageX - at.x) + 'px, 0px, 0px)');
+                            vars.elem.css('webkitTransform', 'translate3d(' + (-vars.h * txtv.width + t.pageX - at.x) + 'px, 0px, 0px)');
                         }
                     }
                     
@@ -141,19 +170,31 @@ var txtv = {
         end: function(e){
             var vars = txtv.touch.vars;
             if (vars.touching) {
+                var t = e.changedTouches ? e.changedTouches[0] : e;  
                 vars.touching = false;
+                
+                if(!vars.dir){
+                    var link = e.target.nodeName == 'A' ? e.target : (e.target.parentNode.nodeName == 'A' ? e.target.parentNode : false);
+                    if(link){
+                        txtv.page.create(link.rel);
+                    }
+                    return; 
+                }
+                
                 if (vars.dir == 'v') {
-                    var diffY = e.pageY - vars.at.y;
-                    var prevPos, elemPos, nextPos;
                     
-                    if (diffY > 50) { // Going up
+                    var diffY = t.pageY - vars.at.y;
+                    var prevPos, elemPos, nextPos;
+                    console.log(diffY);
+                    
+                    if (diffY >= txtv.pageChangeSensitivity) { // Going up
                         prevPos = 0;
                         elemPos = txtv.height;
                         nextPos = txtv.height * 2;
                         vars.activeElem = vars.prev;
                     }
                     else 
-                        if (diffY < -50) { // Going down
+                        if (diffY <= -txtv.pageChangeSensitivity) { // Going down
                             prevPos = -txtv.height * 2;
                             elemPos = -txtv.height;
                             nextPos = 0;
@@ -185,7 +226,7 @@ var txtv = {
                 } else if (vars.dir == 'h') {
                     var h = vars.h;
                     var children = txtv.touch.vars.elem.children().filter('div').length;
-                    var diffX = e.pageX - vars.at.x;
+                    var diffX = t.pageX - vars.at.x;
     
                     if (diffX < 50 && h + 1 <= children - 1) { // Going right, if possible
                         h++;
@@ -196,7 +237,10 @@ var txtv = {
                         }
                     
                     vars.elem.addClass('anim');
-                    vars.elem.css('webkitTransform', 'translate3d(' + (-h * txtv.width) + 'px, 0px, 0px)');
+                    var dx = (-h * txtv.width);
+                    vars.elem.css('webkitTransform', 'translate3d(' + dx + 'px, 0px, 0px)');
+                    vars.elem.data('h', dx)
+                    
                     vars.h = h;
                 }
                 
@@ -204,20 +248,32 @@ var txtv = {
             }
         },
         animEnd: function(e){
-            $(e.currentTarget).removeClass('anim'); // Remove anim class to be able to drag page again
-        },
-        normalize: null
+            $(e.target).removeClass('anim'); // Remove anim class to be able to drag page again
+            if(e.target == txtv.touch.vars.elem[0]){
+                var active = [txtv.touch.vars.prev[0], txtv.touch.vars.elem[0], txtv.touch.vars.next[0]];
+                var pages = txtv.dom.pages.children().filter(function(){
+                    return active.indexOf(this) == -1;
+                }).hide();
+            }
+        }
     },
 	page: {
+        refresh: function(){
+            var num = txtv.touch.vars.activeElem.data('num');
+            $('#page' + num).remove();
+            txtv.page.create(num);
+        },
 		request: function(num, callback, pos){
 			// Create container
 			var num = parseInt(num);
-	        var con = $('<div/>')
+	        var $con = $('<div/>')
 	            .attr('id', 'page' + num)
 	            .append($('<div class="loader"><span>' + num + '</span></div>'))
 	            .data('loaded', false)
 	            .css('webkitTransform', 'translate3d(0px, ' + (pos) + 'px, 0px)');
 	            
+                var con = $con[0];
+                
 	            // Putting all pages in order
 	            var anchor;
 	            $(txtv.dom.pages.children()).each(function(i){
@@ -227,67 +283,58 @@ var txtv = {
 	            })
 	
 	            if(anchor){
-	                anchor.after(con);
+	                anchor.after($con);
 	            } else {
-	                txtv.dom.pages.append(con);
+	                txtv.dom.pages.append($con);
 	            }
 	            
-	            con.show()
+	            $con.show()
 	        
-			// Make the request    
-	        $.ajax({
-	            url: 'http://79.99.1.153/txtv/api/' + num + '.html', // Gateway for cross domain requests
-	            dataType: 'jsonp',
-	            success: function(data){
-	                con
-	                    .bind(touchstart, txtv.touch.normalize(txtv.touch.start))
-	                    .bind(touchmove, txtv.touch.normalize(txtv.touch.move))
-	                    .bind(touchend, txtv.touch.normalize(txtv.touch.end))
-	                    .bind('webkitTransitionEnd', txtv.touch.animEnd);
-	                
-	                // SVT:s counting is upside down
-	                var previousPage = data.match(/nextPage = "(\d+).html"/)[1],
-	                    nextPage = data.match(/previousPage = "(\d+).html"/)[1],
-	                    rawString = data
-	                        .substring(data.indexOf('<pre'), data.lastIndexOf('</pre>') + 6) // Extract all pages
-	                        .replace(/background: url.*?\.gif\)/g, '') // Remove ugly background images
-	                        .replace(/(\d{3}).html/g, function(all, sub){ 
-	                            return 'javascript:txtv.page.create(' + sub + ');'; // Not pretty, but live click event on iPhone is slow...
-	                        }),
-	                    pages = $(rawString)
-	                        .filter(function(i,elem){ // Filter pages
-	                            return elem.nodeName == 'PRE';
-	                        })
-	                        .appendTo(con.empty())
-	                        .wrap('<div class="page"/>')
-	                        .each(function(i){
-	                            $(this).parent().css('left', txtv.width*i); // Position subpages
-	                        })
-	
-	                previousPage = (num == 100 && previousPage == 100 ? 897 : previousPage);
-	                
-	                con
-	                    .data('loaded', true)
-	                    .data('num', num)
-	                    .data('prev', previousPage)
-	                    .data('next', nextPage)
-	                    .trigger('loaded')
-	                
-	                if (callback) {
-	                    callback(con);
-	                }
-	            },
-	            error: function(){
-	                con.remove();
-	            }
-	        });
-	        return con;
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function(data){
+                // SVT:s counting is upside down
+                var previousPage = data.prev,
+                    nextPage = data.next,
+                    rawString = data.data;
+
+                    $(rawString)
+                        .filter(function(i,elem){ // Filter pages
+                            return elem.nodeName == 'PRE';
+                        })
+                        .appendTo($con.empty())
+                        .wrap('<div class="page"/>');
+
+                previousPage = (num == 100 && previousPage == 100 ? 897 : previousPage);
+                
+                $con
+                    .data('loaded', true)
+                    .data('num', num)
+                    .data('prev', previousPage)
+                    .data('next', nextPage)
+                    .trigger('loaded')
+                
+                if (callback) {
+                    callback($con);
+                }
+            };
+            
+            xhr.onerror = function(){
+                $con.remove();
+            };
+            
+            xhr.open("GET", 'http://svt.se/svttext/web/pages/' + num + '.html');
+            xhr.send();
+            
+            if(!pos){
+                txtv.touch.vars.activeElem = $con;
+            }
+	        return $con;
 	    },
 		create: function(num, caching, pos){
 		    var num = num || 100,
 		        pos = pos || 0;
-		        
-		    var page = $('#page' + num); // Try fetching page from DOM
+
+		    var page = $('#page' + num).show(); // Try fetching page from DOM
 		    if(!caching){
 		        page.css('webkitTransform', 'translate3d(0px, ' + (pos) + 'px, 0px)');
 		        if(txtv.touch.vars.elem){ // Get it out of the viewport if non-empty
@@ -295,7 +342,7 @@ var txtv = {
 		        }
 		    }
 		    if (!page.length) { // Didn we not find the node? If not, fetch it!
-		        return txtv.page.request(num, function(con){ 
+                return txtv.page.request(num, function(con){ 
 		            if (!caching) {
 		                txtv.page.getNearby(con); // Prefetching
 		            }
@@ -308,8 +355,8 @@ var txtv = {
 		    }
 		},
 		fetchNearby: function(elem){
-	        txtv.touch.vars.prev = txtv.page.create(elem.data('prev'), true, -txtv.height);
-	        txtv.touch.vars.next = txtv.page.create(elem.data('next'), true, txtv.height);
+	        txtv.touch.vars.prev = txtv.page.create(elem.data('prev'), true, -txtv.height).show();
+	        txtv.touch.vars.next = txtv.page.create(elem.data('next'), true, txtv.height).show();
 	    },
 		getNearby: function(elem){                    
 	        txtv.touch.vars.elem = elem;
@@ -326,17 +373,4 @@ var txtv = {
     }
 }
 
-// Install as webapp if on iPhone
-if(iphone && !navigator.standalone){
-    $('#install').addClass('show');
-} else {
-    // A timeout seems to make the iPhone display the app before everything is loaded
-    //setTimeout(txtv.init 2);
-    txtv.init();
-}
-
-// Titanium sniffs files for modules, and needs a dummy reference to the UI module to build properly
-if (window.Titanium) {
-    var version = Titanium.version;
-    var UI = Titanium.UI;
-}
+txtv.init();

@@ -1,30 +1,25 @@
-<!DOCTYPE html>
-<html manifest="txtv.manifest">
+<html style="background: #000; width: 100%; height: 100%;">
     <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="viewport" content="width=320, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" />
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>txtv</title>
         <link rel="apple-touch-icon" href="pics/apple-touch-icon.png" />
         <link href="css/txtv.css" rel="stylesheet" type="text/css" />
         <link href="css/svt.css" rel="stylesheet" type="text/css" />
         <script type="text/javascript" src="js/jquery-1.4.min.js"></script>
+        <script type="text/javascript" src="js/xhr_cross_domain_web.js"></script>
     </head>
-    <body>
+    <body style="background: #000; width: 100%; height: 100%;" class="portrait">
         <div id="txtv">
             <div id="pages"></div>
-            <input id="numpad" type="tel" />
-            <div id="install">
-                <div id="installMessage">
-                    <p>
-                        För att installera txtv, tryck på <strong>+</strong>
-                        -knappen nedan och välj <strong>Lägg till på hemskärmen</strong>.
-                    </p>
-                    <p>
-                        Kör den sedan som vilken app som helst!
-                    </p>
-                </div>
-            </div>
+            
+        </div>
+        <div id="navigation">
+            <div id="top"></div>
+            <div id="right"></div>
+            <div id="bottom"></div>
+            <div id="left"></div>
         </div>
         <script type="text/javascript" src="js/txtv.js" charset="utf-8"></script>
     </body>
